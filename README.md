@@ -1,0 +1,3 @@
+`sidetree-algorand` is a public Decentralized Identifier (DID) network that implements the `sidetree` protocol on top of Algorand to over DIDs/DPKI.
+
+More information coming soon...
