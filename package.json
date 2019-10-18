@@ -1,0 +1,37 @@
+{
+  "name": "sidetree-algorand",
+  "version": "0.0.1",
+  "description": "Algorand-specific implementation for Sidetree-based DID implementation",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "@decentralized-identity/sidetree": "^0.4.1",
+    "@types/koa": "^2.0.51",
+    "@types/koa-router": "^7.0.42",
+    "koa": "^2.10.0",
+    "koa-router": "^7.4.0",
+    "raw-body": "^2.4.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haardikk21/sidetree-algorand.git"
+  },
+  "keywords": [
+    "blockchain",
+    "algorand",
+    "decentralized-identifiers",
+    "did"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/haardikk21/sidetree-algorand/issues"
+  },
+  "homepage": "https://github.com/haardikk21/sidetree-algorand#readme"
+}
