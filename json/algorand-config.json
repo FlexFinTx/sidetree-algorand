@@ -1,0 +1,13 @@
+{
+  "algodToken": "ABC",
+  "algodServer": "abc",
+  "algodPort": 3000,
+  "algoRoundHashMapperURL": "http://localhost:3000",
+  "algorandMnemonic": "abcd",
+  "port": 5000,
+  "genesisBlockNumber": 2755000,
+  "sidetreeTransactionPrefix": "flex:",
+  "mongoDbConnectionString": "mongodb://localhost:27017/",
+  "databaseName": "sidetree-algorand",
+  "transactionFetchPageSize": 100
+}

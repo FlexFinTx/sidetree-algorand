@@ -5,11 +5,8 @@ import * as Router from 'koa-router';
 import {
   SidetreeIpfsService,
   SidetreeResponse,
-  SidetreeResponseModel,
-  SidetreeCore
+  SidetreeResponseModel
 } from '@decentralized-identity/sidetree';
-import { request } from 'http';
-import { ResponseStatus } from '@decentralized-identity/sidetree/dist/lib/common/Response';
 
 interface IPFSConfig {
   port: number;

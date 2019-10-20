@@ -2,24 +2,14 @@ import * as getRawBody from 'raw-body';
 import * as Koa from 'koa';
 import * as Router from 'koa-router';
 import * as queryString from 'querystring';
-import { request } from 'https';
-
-interface AlgorandServiceConfig {
-  algod: string;
-  port: number;
-  sidetreeTransactionPrefix: string;
-  mongoDbConnectionString: string;
-  databaseName: string | undefined;
-  transactionFetchPageSize: number;
-  requestTimeoutInMilliseconds: number | undefined;
-  requestMaxRetries: number | undefined;
-  transactionPollPeriodInSeconds: number | undefined;
-}
+const algosdk = require('algosdk');
+import { IAlgorandConfig } from './lib/IAlgorandConfig';
+import AlgorandProcessor from './lib/AlgorandProcessor';
 
 const configFilePath =
   process.env.SIDETREE_ALGORAND_CONFIG_FILE_PATH ||
   '../json/algorand-config.json';
-const config: AlgorandServiceConfig = require(configFilePath);
+const config: IAlgorandConfig = require(configFilePath);
 const app = new Koa();
 
 // Raw body parser
@@ -81,32 +71,37 @@ const port = process.env.SIDETREE_ALGORAND_PORT || config.port;
 
 // Initialize the blockchain service
 let server: any;
-let blockchainService: any; // TODO: update to SidetreeAlgorandProcessor
-/*
+let blockchainService: AlgorandProcessor;
+
 try {
-  blockchainService = new SidetreeBitcoinProcessor(config);
+  blockchainService = new AlgorandProcessor(config);
 
   // SIDETREE_TEST_MODE enables unit testing of this file by bypassing blockchain service initialization.
   if (process.env.SIDETREE_TEST_MODE === 'true') {
     server = app.listen(port);
   } else {
-    blockchainService.initialize()
-    .then(() => {
-      server = app.listen(port, () => {
-        console.log(`Sidetree-Bitcoin node running on port: ${port}`);
+    blockchainService
+      .initialize()
+      .then(() => {
+        server = app.listen(port, () => {
+          console.log(`Sidetree-Algorand node running on port: ${port}`);
+        });
+      })
+      .catch(error => {
+        console.error(
+          `Sidetree-Bitcoin node initialization failed with error: ${error}`
+        );
+        process.exit(1);
       });
-    })
-    .catch((error) => {
-      console.error(`Sidetree-Bitcoin node initialization failed with error: ${error}`);
-      process.exit(1);
-    });
   }
 } catch (error) {
-  console.log('Is bitcoinWalletImportString valid? Consider using testnet key generated below:');
-  console.log(SidetreeBitcoinProcessor.generatePrivateKey('testnet'));
+  console.log('Is your mnemonic valid? Try using the one generated below:');
+  console.log(
+    algosdk.secretKeyToMnemonic(AlgorandProcessor.generatePrivateKey())
+  );
   process.exit(1);
 }
-*/
+
 console.info('Sidetree-algorand service configuration:');
 console.info(config);
 

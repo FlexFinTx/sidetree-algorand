@@ -1,5 +1,5 @@
 import { IAlgorandConfig } from './IAlgorandConfig';
-import * as algosdk from 'algosdk';
+const algosdk = require('algosdk');
 import TransactionModel from '@decentralized-identity/sidetree/dist/lib/common/models/TransactionModel';
 import TransactionStore from './TransactionStore';
 import TransactionNumber from './TransactionNumber';
@@ -94,9 +94,9 @@ export default class AlgorandProcessor {
   /**
    * Generates an Algorand account and returns the secret key
    */
-  public static generatePrivateKey(): string {
+  public static generatePrivateKey(): Uint8Array {
     // FIXME: might not work
-    return (<AlgorandAccount>algosdk.generateAccount()).sk.toString();
+    return (<AlgorandAccount>algosdk.generateAccount()).sk;
   }
 
   public async initialize() {
