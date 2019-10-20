@@ -1,3 +1,5 @@
-`sidetree-algorand` is a public Decentralized Identifier (DID) network that implements the `sidetree` protocol on top of Algorand to over DIDs/DPKI.
+# Sidetree Algorand
 
-More information coming soon...
+`sidetree-algorand` is a public Decentralized Identifier (DID) network that implements the `sidetree` protocol on top of Algorand.
+
+This project is meant to be used with `sidetree-core` and `sidetree-ipfs`
