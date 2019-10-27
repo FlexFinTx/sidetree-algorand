@@ -230,7 +230,7 @@ export default class AlgorandProcessor {
    */
   public async writeTransaction(anchorString: string) {
     console.info(`Anchoring string ${anchorString}`);
-    const sidetreeTransactionString = `${this.sidetreePrefix}${anchorString}`;
+    const sidetreeTransactionString = this.sidetreePrefix + anchorString;
 
     const address = this.algorandAccount.addr;
     const accountInformation = await this.algodClient.accountInformation(
@@ -264,7 +264,9 @@ export default class AlgorandProcessor {
     if (!(await this.broadcastTransaction(signedTxn.blob))) {
       throw new Error(`Could not broadcast transaction ${JSON.stringify(txn)}`);
     }
-    console.info(`Successfully submitted transaction ${JSON.stringify(txn)}`);
+    console.info(
+      `Successfully submitted transaction ${sidetreeTransactionString}`
+    );
   }
 
   private async getBlockHash(round: number): Promise<string> {
@@ -290,12 +292,11 @@ export default class AlgorandProcessor {
    * Broadcasts a transaction to the algorand network
    * @param transaction transaction to broadcast
    */
-  private async broadcastTransaction(
-    transaction: any /* AlgorandTransaction */
-  ): Promise<boolean> {
-    const rawTransaction = transaction.blob;
-    const response = await this.algodClient.sendRawTransaction(rawTransaction);
-    return response.length > 0;
+  private async broadcastTransaction(transaction: any): Promise<boolean> {
+    const response = await this.algodClient.sendRawTransaction(transaction, {
+      'Content-Type': 'application/x-binary'
+    });
+    return response.txId ? true : false;
   }
 
   /**
@@ -491,7 +492,7 @@ export default class AlgorandProcessor {
         continue;
       }
 
-      const data = JSON.stringify(algosdk.decodeObj(transaction.noteb64));
+      const data = algosdk.decodeObj(transaction.note);
       if (data.startsWith(this.sidetreePrefix)) {
         // We have found a sidetree transaction
         const sidetreeTransaction: TransactionModel = {

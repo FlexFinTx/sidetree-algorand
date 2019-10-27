@@ -39,7 +39,7 @@ router.get('/transactions', async (ctx, _next) => {
 router.post('/transactions', async (ctx, _next) => {
   const writeRequest = JSON.parse(ctx.body);
   const requestHandler = () =>
-    blockchainService.writeTransaction(writeRequest.anchorFileHash);
+    blockchainService.writeTransaction(writeRequest.anchorString);
   await handleRequestAndSetKoaResponse(requestHandler, ctx.response);
 });
 
