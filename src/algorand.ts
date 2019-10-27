@@ -89,7 +89,7 @@ try {
       })
       .catch(error => {
         console.error(
-          `Sidetree-Bitcoin node initialization failed with error: ${error}`
+          `Sidetree-Algorand node initialization failed with error: ${error}`
         );
         process.exit(1);
       });

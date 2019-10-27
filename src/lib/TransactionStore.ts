@@ -24,7 +24,10 @@ export default class TransactionStore implements ITransactionStore {
 
   // Initialize the MongoDB transaction store
   public async initialize(): Promise<void> {
-    const client = await MongoClient.connect(this.serverUrl);
+    const client = await MongoClient.connect(this.serverUrl, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
     this.db = client.db(this.databaseName);
     this.transactionCollection = await TransactionStore.createTransactionCollectionIfNotExist(
       this.db

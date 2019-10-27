@@ -109,7 +109,7 @@ export default class AlgorandProcessor {
     } else {
       console.debug('Account found');
     }
-    console.debug('Synchronizing blcoks for sidetree transactions...');
+    console.debug('Synchronizing blocks for sidetree transactions...');
     const lastKnownTransaction = await this.transactionStore.getLastTransaction();
     if (lastKnownTransaction) {
       console.info(
@@ -168,9 +168,9 @@ export default class AlgorandProcessor {
     transactions: TransactionModel[];
     moreTransactions: boolean;
   }> {
-    if (!hash || !since) {
+    if ((since && !hash) || (!since && hash)) {
       throw new Error('Bad Request');
-    } else {
+    } else if (since && hash) {
       if (
         !(await this.verifyBlock(TransactionNumber.getBlockNumber(since), hash))
       ) {
@@ -465,9 +465,15 @@ export default class AlgorandProcessor {
    */
   private async processBlock(height: number): Promise<string> {
     console.info(`Processing block ${height}`);
+
+    function sleep(ms: number) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    await sleep(250);
     const responseData = await this.algodClient.block(height);
 
-    const transactions = responseData.txns.transactions as Array<any>;
+    const transactions = (responseData.txns.transactions as Array<any>) || [];
     const blockHash = responseData.hash;
 
     console.debug(
@@ -517,7 +523,6 @@ export default class AlgorandProcessor {
    * @returns true if a account exists, false otherwise
    */
   private async accountExists(address: string) {
-    console.info(`Checking if Algorand account for ${address} exists`);
     const response = await this.algodClient.accountInformation(address);
     return response.address === address;
   }

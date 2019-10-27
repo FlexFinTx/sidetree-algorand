@@ -1,8 +1,8 @@
 {
   "batchingIntervalInSeconds": 600,
-  "blockchainServiceUri": "http://127.0.0.1:3002",
-  "contentAddressableStoreServiceUri": "http://127.0.0.1:3003",
-  "didMethodName": "did:ion:test:",
+  "blockchainServiceUri": "http://127.0.0.1:3001",
+  "contentAddressableStoreServiceUri": "http://127.0.0.1:3002",
+  "didMethodName": "did:flex:test:",
   "maxConcurrentDownloads": 20,
   "mongoDbConnectionString": "mongodb://localhost:27017/",
   "observingIntervalInSeconds": 60,

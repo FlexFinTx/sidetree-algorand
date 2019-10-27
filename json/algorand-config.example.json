@@ -1,0 +1,15 @@
+{
+  "algodToken": {
+    "X-API-Key": "purestake api key"
+  },
+  "algodServer": "https://testnet-algorand.api.purestake.io/ps1",
+  "algodPort": "",
+  "algoRoundHashMapperURL": "http://localhost:3003",
+  "algorandMnemonic": "<fill this>",
+  "port": 3001,
+  "genesisBlockNumber": 2689099,
+  "sidetreeTransactionPrefix": "flex:",
+  "mongoDbConnectionString": "mongodb://localhost:27017/",
+  "databaseName": "sidetree-algorand",
+  "transactionFetchPageSize": 100
+}

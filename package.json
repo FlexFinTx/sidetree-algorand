@@ -21,13 +21,19 @@
     "request": "^2.88.0",
     "typescript": "^3.6.4"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "copyfiles": "^2.1.1"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc && copyfiles \"json/**/*.json\" dist && copyfiles \"tests/**/*.json\" dist",
+    "start": "node dist/core.js",
+    "core": "node dist/core.js",
+    "algorand": "node dist/algorand.js",
+    "ipfs": "node dist/ipfs.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/haardikk21/sidetree-algorand.git"
+    "url": "git+https://github.com/FlexFinTx/sidetree-algorand.git"
   },
   "keywords": [
     "blockchain",
@@ -38,7 +44,7 @@
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/haardikk21/sidetree-algorand/issues"
+    "url": "https://github.com/FlexFinTx/sidetree-algorand/issues"
   },
-  "homepage": "https://github.com/haardikk21/sidetree-algorand#readme"
+  "homepage": "https://github.com/FlexFinTx/sidetree-algorand#readme"
 }
