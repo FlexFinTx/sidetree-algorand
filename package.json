@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "dependencies": {
-    "@decentralized-identity/sidetree": "^0.4.1",
+    "@decentralized-identity/sidetree": "^0.5.0",
     "@types/koa": "^2.0.51",
     "@types/koa-router": "^7.0.42",
     "@types/mongodb": "^3.3.6",
