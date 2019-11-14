@@ -4,7 +4,6 @@ import TransactionModel from '@decentralized-identity/sidetree/dist/lib/common/m
 import TransactionStore from './TransactionStore';
 import TransactionNumber from './TransactionNumber';
 import * as request from 'request';
-
 export interface IBlockchainTime {
   time: number;
   hash: string;
@@ -442,6 +441,7 @@ export default class AlgorandProcessor {
   private async getCurrentBlockHeight(): Promise<number> {
     console.info('Getting current block height...');
     let lastRound = (await this.algodClient.status()).lastRound;
+    console.info('Current block height: ' + lastRound);
     return lastRound;
   }
 
@@ -487,32 +487,38 @@ export default class AlgorandProcessor {
       transactionIndex++
     ) {
       let transaction = transactions[transactionIndex];
-      if (!transaction.noteb64) {
+      if (!transaction.note) {
         // Doesn't have a note field, we can skip
         continue;
       }
 
-      const data = algosdk.decodeObj(transaction.note);
-      if (data.startsWith(this.sidetreePrefix)) {
-        // We have found a sidetree transaction
-        const sidetreeTransaction: TransactionModel = {
-          transactionNumber: TransactionNumber.construct(
-            height,
-            transactionIndex
-          ),
-          transactionTime: height,
-          transactionTimeHash: blockHash,
-          anchorString: data.slice(this.sidetreePrefix.length)
-        };
+      try {
+        const data = algosdk.decodeObj(transaction.note);
+        if (data.startsWith(this.sidetreePrefix)) {
+          // We have found a sidetree transaction
+          const sidetreeTransaction: TransactionModel = {
+            transactionNumber: TransactionNumber.construct(
+              height,
+              transactionIndex
+            ),
+            transactionTime: height,
+            transactionTimeHash: blockHash,
+            anchorString: data.slice(this.sidetreePrefix.length)
+          };
 
+          console.debug(
+            `Sidetree transaction found; adding ${JSON.stringify(
+              sidetreeTransaction
+            )}`
+          );
+          await this.transactionStore.addTransaction(sidetreeTransaction);
+          // Stop processing future anchor strings. Protocol defines only the first should be considered.
+          break;
+        }
+      } catch (err) {
         console.debug(
-          `Sidetree transaction found; adding ${JSON.stringify(
-            sidetreeTransaction
-          )}`
+          `Transaction in block ${height} at index ${transactionIndex} contains un-parseable note`
         );
-        await this.transactionStore.addTransaction(sidetreeTransaction);
-        // Stop processing future anchor strings. Protocol defines only the first should be considered.
-        break;
       }
     }
     return blockHash;
