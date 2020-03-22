@@ -1,12 +1,12 @@
-import ITransactionStore from '@decentralized-identity/sidetree/dist/lib/core/interfaces/ITransactionStore';
-import TransactionModel from '@decentralized-identity/sidetree/dist/lib/common/models/TransactionModel';
-import { Collection, Db, Long, MongoClient } from 'mongodb';
+import ITransactionStore from "@decentralized-identity/sidetree/dist/lib/core/interfaces/ITransactionStore";
+import TransactionModel from "@decentralized-identity/sidetree/dist/lib/common/models/TransactionModel";
+import { Collection, Db, Long, MongoClient, Cursor } from "mongodb";
 
 export default class TransactionStore implements ITransactionStore {
   // Default database name if not specified
-  public static readonly defaultDatabaseName: string = 'sidetree';
+  public static readonly defaultDatabaseName: string = "sidetree";
   // Collection name for transactions
-  public static readonly transactionCollectionName: string = 'transactions';
+  public static readonly transactionCollectionName: string = "transactions";
   // Database name used by the transaction store
   public readonly databaseName: string;
   // Server URL for Mongo
@@ -34,6 +34,44 @@ export default class TransactionStore implements ITransactionStore {
     );
   }
 
+  /**
+   * Gets a list of transactions between the bounds of transaction time. The smaller value will be inclusive while the bigger be exclusive
+   * @param inclusiveBeginTransactionTime The first transaction time to begin querying for
+   * @param exclusiveEndTransactionTime The transaction time to stop querying for
+   */
+  public async getTransactionsStartingFrom(
+    inclusiveBeginTransactionTime: number,
+    exclusiveEndTransactionTime: number
+  ): Promise<TransactionModel[]> {
+    let cursor: Cursor<any>;
+    if (inclusiveBeginTransactionTime === exclusiveEndTransactionTime) {
+      // if begin === end, query for 1 transaction time
+      cursor = this.transactionCollection!.find({
+        transactionTime: { $eq: Long.fromNumber(inclusiveBeginTransactionTime) }
+      });
+    } else {
+      cursor = this.transactionCollection!.find({
+        $and: [
+          {
+            transactionTime: {
+              $gte: Long.fromNumber(inclusiveBeginTransactionTime)
+            }
+          },
+          {
+            transactionTime: {
+              $lt: Long.fromNumber(exclusiveEndTransactionTime)
+            }
+          }
+        ]
+      });
+    }
+
+    const transactions: TransactionModel[] = await cursor
+      .sort({ transactionNumber: 1 })
+      .toArray();
+    return transactions;
+  }
+
   private static async createTransactionCollectionIfNotExist(
     db: Db
   ): Promise<Collection<TransactionModel>> {
@@ -44,12 +82,12 @@ export default class TransactionStore implements ITransactionStore {
 
     let transactionCollection;
     if (collectionNames.includes(TransactionStore.transactionCollectionName)) {
-      console.info('Transaction collection exists');
+      console.info("Transaction collection exists");
       transactionCollection = db.collection(
         TransactionStore.transactionCollectionName
       );
     } else {
-      console.info('Transaction collection does not exist, creating...');
+      console.info("Transaction collection does not exist, creating...");
       transactionCollection = await db.createCollection(
         TransactionStore.transactionCollectionName
       );
@@ -58,7 +96,7 @@ export default class TransactionStore implements ITransactionStore {
         { transactionNumber: 1 },
         { unique: true }
       );
-      console.info('Transaction collection created');
+      console.info("Transaction collection created");
     }
 
     return transactionCollection;

@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "dependencies": {
-    "@decentralized-identity/sidetree": "^0.5.0",
+    "@decentralized-identity/sidetree": "^0.6.1",
     "@types/koa": "^2.0.51",
     "@types/koa-router": "^7.0.42",
     "@types/mongodb": "^3.3.6",
@@ -22,7 +22,7 @@
     "typescript": "^3.6.4"
   },
   "devDependencies": {
-    "copyfiles": "^2.1.1"
+    "copyfiles": "^2.2.0"
   },
   "scripts": {
     "build": "tsc && copyfiles \"json/**/*.json\" dist && copyfiles \"tests/**/*.json\" dist",

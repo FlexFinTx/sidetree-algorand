@@ -1,9 +1,9 @@
-import { IAlgorandConfig } from './IAlgorandConfig';
-const algosdk = require('algosdk');
-import TransactionModel from '@decentralized-identity/sidetree/dist/lib/common/models/TransactionModel';
-import TransactionStore from './TransactionStore';
-import TransactionNumber from './TransactionNumber';
-import * as request from 'request';
+import { IAlgorandConfig } from "./IAlgorandConfig";
+const algosdk = require("algosdk");
+import TransactionModel from "@decentralized-identity/sidetree/dist/lib/common/models/TransactionModel";
+import TransactionStore from "./TransactionStore";
+import TransactionNumber from "./TransactionNumber";
+import * as request from "request";
 export interface IBlockchainTime {
   time: number;
   hash: string;
@@ -65,6 +65,8 @@ export default class AlgorandProcessor {
   // poll timeout ID
   private pollTimeoutId: number | undefined;
 
+  private static readonly pageSizeInBlocks = 20;
+
   public constructor(config: IAlgorandConfig) {
     this.algodToken = config.algodToken;
     this.algodServer = config.algodServer;
@@ -99,16 +101,16 @@ export default class AlgorandProcessor {
   }
 
   public async initialize() {
-    console.debug('Initializing ITransactionStore');
+    console.debug("Initializing ITransactionStore");
     await this.transactionStore.initialize();
     const address = this.algorandAccount.addr;
     console.debug(`Checking if algorand contains a account for ${address}`);
     if (!(await this.accountExists(address))) {
-      throw new Error('Algorand account does not exist');
+      throw new Error("Algorand account does not exist");
     } else {
-      console.debug('Account found');
+      console.debug("Account found");
     }
-    console.debug('Synchronizing blocks for sidetree transactions...');
+    console.debug("Synchronizing blocks for sidetree transactions...");
     const lastKnownTransaction = await this.transactionStore.getLastTransaction();
     if (lastKnownTransaction) {
       console.info(
@@ -135,7 +137,7 @@ export default class AlgorandProcessor {
    * @returns the current or associated blockchain time of the given hash
    */
   public async time(hash?: string): Promise<IBlockchainTime> {
-    console.info(`Getting time ${hash ? 'of time hash' + hash : ''}`);
+    console.info(`Getting time ${hash ? "of time hash" + hash : ""}`);
     if (!hash) {
       const blockHeight = await this.getCurrentBlockHeight();
       hash = await this.getBlockHash(blockHeight);
@@ -146,7 +148,7 @@ export default class AlgorandProcessor {
     }
 
     const blockHeight = await this.getBlockHeight(hash);
-    if (blockHeight === -1) throw new Error('Unable to get block height');
+    if (blockHeight === -1) throw new Error("Unable to get block height");
     const response = await this.algodClient.block(blockHeight);
     return {
       hash: response.hash,
@@ -168,38 +170,47 @@ export default class AlgorandProcessor {
     moreTransactions: boolean;
   }> {
     if ((since && !hash) || (!since && hash)) {
-      throw new Error('Bad Request');
+      throw new Error("Bad Request");
     } else if (since && hash) {
       if (
         !(await this.verifyBlock(TransactionNumber.getBlockNumber(since), hash))
       ) {
-        console.info('Requested transactions hash mismatched blockchain');
-        throw new Error('Bad Request');
+        console.info("Requested transactions hash mismatched blockchain");
+        throw new Error("Bad Request");
       }
     }
 
     console.info(
       `Returning transactions since ${
-        since ? 'block' + TransactionNumber.getBlockNumber(since) : 'beginning'
+        since ? "block" + TransactionNumber.getBlockNumber(since) : "beginning"
       }...`
     );
-    let transactions = await this.transactionStore.getTransactionsLaterThan(
+
+    const currentLastProcessedBlock = Object.assign({}, this.lastSeenBlock!);
+    let [transactions, numOfBlocksAcquired] = await this.getTransactionsSince(
       since,
-      this.pageSize
+      currentLastProcessedBlock.height
     );
 
-    transactions = transactions.map(transaction => {
-      return {
-        transactionNumber: transaction.transactionNumber,
-        transactionTime: transaction.transactionTime,
-        transactionTimeHash: transaction.transactionTimeHash,
-        anchorString: transaction.anchorString
-      };
-    });
+    // make sure the last processed block hasn't changed since before getting transactions
+    // if changed, then a block reorg happened.
+    if (
+      !(await this.verifyBlock(
+        currentLastProcessedBlock.height,
+        currentLastProcessedBlock.hash
+      ))
+    ) {
+      console.info("Requested transactions hash mismatched blockchain");
+      throw new Error("Bad Request");
+    }
+
+    // if we did not get enough blocks to fill the page, there are no more transactions
+    const moreTransactions =
+      numOfBlocksAcquired >= AlgorandProcessor.pageSizeInBlocks;
 
     return {
       transactions,
-      moreTransactions: transactions.length === this.pageSize
+      moreTransactions
     };
   }
 
@@ -293,7 +304,7 @@ export default class AlgorandProcessor {
    */
   private async broadcastTransaction(transaction: any): Promise<boolean> {
     const response = await this.algodClient.sendRawTransaction(transaction, {
-      'Content-Type': 'application/x-binary'
+      "Content-Type": "application/x-binary"
     });
     return response.txId ? true : false;
   }
@@ -354,7 +365,7 @@ export default class AlgorandProcessor {
       startBlockHeight < this.genesisBlockNumber ||
       endBlockHeight < this.genesisBlockNumber
     ) {
-      throw new Error('Cannot process Transactions before genesis');
+      throw new Error("Cannot process Transactions before genesis");
     }
 
     console.info(
@@ -384,7 +395,7 @@ export default class AlgorandProcessor {
    * @returns last valid block height before the fork
    */
   private async revertBlockchainCache(): Promise<number> {
-    console.info('Reverting transactions');
+    console.info("Reverting transactions");
 
     // Keep reverting until a valid tx is found
     while ((await this.transactionStore.getTransactionsCount()) > 0) {
@@ -439,9 +450,9 @@ export default class AlgorandProcessor {
    * @returns the latest block number
    */
   private async getCurrentBlockHeight(): Promise<number> {
-    console.info('Getting current block height...');
+    console.info("Getting current block height...");
     let lastRound = (await this.algodClient.status()).lastRound;
-    console.info('Current block height: ' + lastRound);
+    console.info("Current block height: " + lastRound);
     return lastRound;
   }
 
@@ -486,7 +497,7 @@ export default class AlgorandProcessor {
       transactionIndex < transactions.length;
       transactionIndex++
     ) {
-      let transaction = transactions[transactionIndex];
+      const transaction = transactions[transactionIndex];
       if (!transaction.note) {
         // Doesn't have a note field, we can skip
         continue;
@@ -503,7 +514,9 @@ export default class AlgorandProcessor {
             ),
             transactionTime: height,
             transactionTimeHash: blockHash,
-            anchorString: data.slice(this.sidetreePrefix.length)
+            anchorString: data.slice(this.sidetreePrefix.length),
+            transactionFeePaid: transaction.fee,
+            normalizedTransactionFee: -1
           };
 
           console.debug(
@@ -532,5 +545,63 @@ export default class AlgorandProcessor {
   private async accountExists(address: string) {
     const response = await this.algodClient.accountInformation(address);
     return response.address === address;
+  }
+
+  /**
+   * Return transactions since transaction number and number of blocks acquired (Will get at least pageSizeInBlocks)
+   * @param since Transaction number to query since
+   * @param maxBlockHeight The last block height to consider included in transactions
+   * @returns a tuple of [transactions, numberOfBlocksContainedInTransactions]
+   */
+  private async getTransactionsSince(
+    since: number | undefined,
+    maxBlockHeight: number
+  ): Promise<[TransactionModel[], number]> {
+    let inclusiveBeginTransactionTime =
+      since === undefined
+        ? this.genesisBlockNumber
+        : TransactionNumber.getBlockNumber(since);
+    let numOfBlocksAcquired = 0;
+
+    const transactionsToReturn: TransactionModel[] = [];
+
+    // while we still need more blocks and have not reached the last processed block
+    while (
+      numOfBlocksAcquired < AlgorandProcessor.pageSizeInBlocks &&
+      inclusiveBeginTransactionTime <= maxBlockHeight
+    ) {
+      const exclusiveEndTransactionTime =
+        inclusiveBeginTransactionTime + AlgorandProcessor.pageSizeInBlocks;
+      let transactions: TransactionModel[] = await this.transactionStore.getTransactionsStartingFrom(
+        inclusiveBeginTransactionTime,
+        exclusiveEndTransactionTime
+      );
+
+      transactions = transactions.filter(transaction => {
+        return (
+          transaction.transactionTime <= maxBlockHeight &&
+          (since === undefined || transaction.transactionNumber > since)
+        );
+      });
+
+      numOfBlocksAcquired += AlgorandProcessor.getUniqueNumOfBlocksInTransactions(
+        transactions
+      );
+      inclusiveBeginTransactionTime = exclusiveEndTransactionTime;
+      transactionsToReturn.push(...transactions);
+    }
+
+    return [transactionsToReturn, numOfBlocksAcquired];
+  }
+
+  private static getUniqueNumOfBlocksInTransactions(
+    transactions: TransactionModel[]
+  ): number {
+    const uniqueBlockNumbers = new Set<number>();
+    for (const transaction of transactions) {
+      uniqueBlockNumbers.add(transaction.transactionTime);
+    }
+
+    return uniqueBlockNumbers.size;
   }
 }
